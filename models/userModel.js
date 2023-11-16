@@ -12,7 +12,7 @@ const studentSchema = mongoose.Schema(
     password: { type: String, required: true },
     avatar: { type: String },
     DOB: Date,
-    roll: {
+    role: {
       type: String,
       required: true,
       enum: ["admin", "moderator", "student"],

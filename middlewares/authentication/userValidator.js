@@ -1,5 +1,5 @@
 const { check } = require("express-validator");
-const { Student } = require("../models/userModel");
+const { Student } = require("../../models/userModel");
 const createError = require("http-errors");
 
 const userValidator = [
