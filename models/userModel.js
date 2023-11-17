@@ -24,3 +24,4 @@ const studentSchema = mongoose.Schema(
 const Student = mongoose.model("User", studentSchema);
 
 module.exports = { Student };
+// stories: [{ type: Schema.Types.ObjectId, ref: "Story" }],

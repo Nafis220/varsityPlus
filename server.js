@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 const authRoute = require("./routes/authentication/authenticationRoute");
 const userRoute = require("./routes/user/userRoute");
-
+const storyRoute = require("./routes/story/storyRoute");
 const cookieParser = require("cookie-parser");
 
 const app = express();
@@ -41,6 +41,7 @@ app.use(cookieParser(process.env.COOKIE_NAME));
 //! attached to studentRoute
 app.use("/auth", authRoute);
 app.use("/user", userRoute);
+app.use("/story", storyRoute);
 app.listen(process.env.PORT, () => {
   console.log(`server is listening to port ${process.env.PORT}`);
 });

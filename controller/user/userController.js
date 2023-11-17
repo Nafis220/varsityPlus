@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const { Student } = require("../../models/userModel");
 const bcrypt = require("bcrypt");
 const getUsers = async (req, res) => {
@@ -11,6 +12,23 @@ const getUsers = async (req, res) => {
       .json({ error: { users: { message: "internal server error" } } });
   }
 };
+
+const getOneUser = async (req, res) => {
+  const searchProperty = req.body.email ? req.body.email : req.body.name;
+
+  try {
+    const userInfo = await Student.findOne({
+      $or: [{ email: searchProperty }, { name: searchProperty }],
+    });
+    res.status(200).json({ success: { users: userInfo } });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ error: { users: { message: "internal server error" } } });
+  }
+};
+
 //delete a user.
 const deleteUser = async (req, res) => {
   try {
@@ -18,9 +36,11 @@ const deleteUser = async (req, res) => {
     await Student.deleteOne({
       $or: [{ email: deleteProperty }, { name: deleteProperty }],
     });
-    res
-      .status(200)
-      .json({ success: { users: { message: "user deleted successfully" } } });
+    res.status(200).json({
+      success: {
+        users: { message: `${deleteProperty} deleted successfully` },
+      },
+    });
   } catch (error) {
     res
       .status(500)
@@ -29,22 +49,24 @@ const deleteUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const filter = req.body.email ? req.body.email : req.body.name;
-  const update = req.body.emailUpdate
-    ? req.body.emailUpdate
-    : req.body.passwordUpdate;
+  const cookie = req.signedCookies;
+  const token = cookie[process.env.COOKIE_NAME];
+  const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+
+  const filter = userInfo.email;
+  const update = req.body.name ? req.body.name : req.body.password;
 
   try {
-    if (req.body.emailUpdate) {
+    if (req.body.name) {
       await Student.findOneAndUpdate(
-        { $or: [{ name: filter }, { email: filter }] },
-        { email: update },
+        { email: filter },
+        { name: update },
         { returnOriginal: true }
       );
     } else {
-      const hashedPassword = await bcrypt.hash(update, process.env.SALT);
+      const hashedPassword = await bcrypt.hash(update, 10);
       await Student.findOneAndUpdate(
-        { $or: [{ name: filter }, { email: filter }] },
+        { email: filter },
         { password: hashedPassword },
         { returnOriginal: true }
       );
@@ -53,10 +75,63 @@ const updateUser = async (req, res) => {
       .status(200)
       .json({ success: { user: { message: "User updated successfully" } } });
   } catch (error) {
+    console.log(error);
     res
       .status(500)
       .json({ error: { user: { message: "internal server error" } } });
   }
 };
 
-module.exports = { getUsers, deleteUser, updateUser };
+const deleteAccount = async (req, res) => {
+  const cookie = req.signedCookies;
+  const token = cookie[process.env.COOKIE_NAME];
+  const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+
+  const email = userInfo.email;
+  try {
+    const deleted = await Student.deleteOne({ email: email });
+
+    res.status(200).json({
+      success: {
+        user: { message: `${deleted.deletedCount} User deleted Successfully` },
+      },
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: { user: { message: "internal server error" } } });
+  }
+};
+
+const updateRole = async (req, res) => {
+  const filter = req.body.email;
+  const updatedRole = req.body.role;
+  try {
+    await Student.findOneAndUpdate(
+      { email: filter },
+      { role: updatedRole },
+      { returnOriginal: true }
+    );
+    res.status(200).json({
+      success: {
+        user: {
+          message: `${filter}'s role is changed to ${updatedRole} successfully`,
+        },
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ error: { user: { message: "internal server error" } } });
+  }
+};
+
+module.exports = {
+  getUsers,
+  deleteUser,
+  updateUser,
+  deleteAccount,
+  updateRole,
+  getOneUser,
+};
