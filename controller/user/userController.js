@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken");
 const { Student } = require("../../models/userModel");
+const userInfo = require("../../utilities/common/cookiesToUser");
 const bcrypt = require("bcrypt");
 const getUsers = async (req, res) => {
   try {
@@ -49,9 +49,7 @@ const deleteUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const cookie = req.signedCookies;
-  const token = cookie[process.env.COOKIE_NAME];
-  const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+  const userInfo = cookiesToUser(req.signedCookies);
 
   const filter = userInfo.email;
   const update = req.body.name ? req.body.name : req.body.password;
@@ -83,9 +81,7 @@ const updateUser = async (req, res) => {
 };
 
 const deleteAccount = async (req, res) => {
-  const cookie = req.signedCookies;
-  const token = cookie[process.env.COOKIE_NAME];
-  const userInfo = jwt.verify(token, process.env.JWT_SECRET);
+  const userInfo = cookiesToUser(req.signedCookies);
 
   const email = userInfo.email;
   try {
