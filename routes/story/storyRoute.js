@@ -38,4 +38,5 @@ route.get("/friendStory", checkLogin, friendStory);
 route.delete("/deleteOwnStory", checkLogin, deleteOwnStory);
 //10:user can like to friend's story
 route.put("/likeStory", checkLogin, likePost);
+//11: user can unlike the story
 module.exports = route;

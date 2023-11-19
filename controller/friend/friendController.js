@@ -10,29 +10,58 @@ const sendRequest = async (req, res) => {
     const userInfo = await Student.findOne({
       $or: [{ email: searchProperty }, { name: searchProperty }],
     });
+
     if (userInfo) {
+      const senderInfo = cookiesToUser(req.signedCookies);
       const receiver_id = userInfo._id;
       const receiverName = userInfo.name;
-      const senderInfo = cookiesToUser(req.signedCookies);
       const serder_id = senderInfo._id;
-      const senderName = senderInfo.name;
-      const friendshipObj = {
-        sender: serder_id,
-        senderName: senderName,
-        receiver: receiver_id,
-        receiverName: receiverName,
-      };
-      const friendshipInfo = new Friend(friendshipObj);
+      const friendships = await Friend.find({ receiver: receiver_id });
 
-      await friendshipInfo.save();
+      let test = [];
 
-      res.status(200).json({
-        success: { friend: { message: "request sent successfully" } },
-      });
-    } else {
-      res
-        .status(404)
-        .json({ error: { friend: { message: "user not found" } } });
+      if (Object.keys(friendships).length > 0) {
+        friendships.map((friendship) => {
+          friendStatus = friendship.status;
+          test.push(JSON.stringify(friendship.sender));
+        });
+
+        if (test.includes(JSON.stringify(serder_id))) {
+          res.status(400).json({
+            message: `you have already sent a request to this user`,
+          });
+        } else {
+          const senderName = senderInfo.name;
+          const friendshipObj = {
+            sender: serder_id,
+            senderName: senderName,
+            receiver: receiver_id,
+            receiverName: receiverName,
+          };
+          const friendshipInfo = new Friend(friendshipObj);
+
+          await friendshipInfo.save();
+
+          res.status(200).json({
+            success: { friend: { message: "request sent successfully" } },
+          });
+        }
+      } else {
+        const senderName = senderInfo.name;
+        const friendshipObj = {
+          sender: serder_id,
+          senderName: senderName,
+          receiver: receiver_id,
+          receiverName: receiverName,
+        };
+        const friendshipInfo = new Friend(friendshipObj);
+
+        await friendshipInfo.save();
+
+        res.status(200).json({
+          success: { friend: { message: "request sent successfully" } },
+        });
+      }
     }
   } catch (error) {
     res

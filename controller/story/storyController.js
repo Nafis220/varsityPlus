@@ -64,12 +64,12 @@ const getOwnStory = async (req, res) => {
   }
 };
 const updateStory = async (req, res) => {
-  const filter = req.body.tag;
+  const filter = req.query.storyId;
   const subject = req.body.subject ? req.body.subject : null;
   const story = req.body.story ? req.body.story : null;
   let isStory;
   try {
-    isStory = await Story.findOne({ tag: filter });
+    isStory = await Story.findOne({ _id: filter });
   } catch (error) {
     res
       .status(500)
@@ -80,7 +80,7 @@ const updateStory = async (req, res) => {
       if (story && subject) {
         const tag = turnToTag(subject);
         await Story.findOneAndUpdate(
-          { tag: filter },
+          { _id: filter },
           { subject: subject, story: story, tag: tag }
         );
         res.status(200).json({
@@ -159,17 +159,21 @@ const deleteOwnStory = async (req, res) => {
   const postId = req.query.story;
   try {
     const post = await Story.find({ _id: postId });
-    if (
-      post.map(
-        (post) => JSON.stringify(post.author) === JSON.stringify(authorId)
-      )
-    ) {
-      await Story.deleteOne({ _id: postId });
-      res
-        .status(200)
-        .json({ success: { story: { message: "User deleted success" } } });
+    if (Object.keys(post).length > 0) {
+      if (
+        post.map(
+          (post) => JSON.stringify(post.author) === JSON.stringify(authorId)
+        )
+      ) {
+        await Story.deleteOne({ _id: postId });
+        res
+          .status(200)
+          .json({ success: { story: { message: "Comment deleted success" } } });
+      } else {
+        res.status(401).json({ error: { story: { error: "unauthorized" } } });
+      }
     } else {
-      res.status(401).json({ error: { story: { error: "unauthorized" } } });
+      res.status(404).json({ error: { story: { error: "story not found" } } });
     }
   } catch (error) {
     res
@@ -220,40 +224,45 @@ const likePost = async (req, res) => {
   const storyId = req.query.storyId;
   try {
     const storyInfo = await Story.findOne({ _id: storyId });
-
+    const existinglikers = storyInfo.likers;
     if (Object.keys(storyInfo).length > 0) {
-      const storyAuthor = storyInfo.author;
+      if (!existinglikers.includes(userInfo._id)) {
+        const storyAuthor = storyInfo.author;
 
-      const friendshipInfo = await Friend.find({
-        $or: [{ sender: storyAuthor }, { receiver: storyAuthor }],
-      });
+        const friendshipInfo = await Friend.find({
+          $or: [{ sender: storyAuthor }, { receiver: storyAuthor }],
+        });
 
-      let friendShipDetails; // every doc where there the author exists
-      //map and get the accepted doc
-
-      if (
-        friendshipInfo.map((info) => {
-          info.status === "accepted";
-        })
-      ) {
         if (
           friendshipInfo.map((info) => {
-            info.sender === userInfo._id || info.receiver === userInfo._id;
+            info.status === "accepted";
           })
         ) {
-          console.log(storyInfo.likes);
-          const newLiker = userInfo._id;
-          const likersArray = [newLiker];
-          const likeCount = storyInfo.likes + 1;
-          console.log(likersArray, newLiker);
-          await Story.findOneAndUpdate(
-            { _id: storyId },
-            { likers: likersArray, likes: likeCount }
-          );
+          if (
+            friendshipInfo.map((info) => {
+              info.sender === userInfo._id || info.receiver === userInfo._id;
+            })
+          ) {
+            const newLiker = userInfo._id;
 
-          res.status(200).json({
-            success: { story: { message: "Like sent successfully" } },
-          });
+            const likeCount = storyInfo.likes + 1;
+
+            await Story.findOneAndUpdate(
+              { _id: storyId },
+              { $push: { likers: [newLiker] }, likes: likeCount },
+              { returnNewDocument: false }
+            );
+
+            res.status(200).json({
+              success: { story: { message: "Like sent successfully" } },
+            });
+          } else {
+            res.status(404).json({
+              error: {
+                story: { message: "you are not a friend of story author" },
+              },
+            });
+          }
         } else {
           res.status(404).json({
             error: {
@@ -262,17 +271,14 @@ const likePost = async (req, res) => {
           });
         }
       } else {
-        res.status(404).json({
-          error: {
-            story: { message: "you are not a friend of story author" },
-          },
+        res.status(400).json({
+          error: { story: { message: "you already liked that post" } },
         });
       }
     } else {
       res.status(404).json({ error: { story: { error: "not found" } } });
     }
   } catch (error) {
-    console.log(error);
     res
       .status(500)
       .json({ error: { friend: { message: "internal server error" } } });

@@ -7,6 +7,7 @@ const userRoute = require("./routes/user/userRoute");
 const storyRoute = require("./routes/story/storyRoute");
 const friendRoute = require("./routes/friend/friendRoute");
 const commentRoute = require("./routes/comment/commentRouter");
+const messageRoute = require("./routes/message/messageRoute");
 const cookieParser = require("cookie-parser");
 
 const app = express();
@@ -46,6 +47,7 @@ app.use("/user", userRoute);
 app.use("/story", storyRoute);
 app.use("/friend", friendRoute);
 app.use("/comment", commentRoute);
+app.use("/message", messageRoute);
 app.listen(process.env.PORT, () => {
   console.log(`server is listening to port ${process.env.PORT}`);
 });
