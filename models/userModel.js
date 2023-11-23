@@ -11,7 +11,7 @@ const studentSchema = mongoose.Schema(
     email: { type: String, trim: true, required: true, lowercase: true },
     password: { type: String, required: true },
     avatar: { type: String },
-    DOB: Date,
+
     role: {
       type: String,
       required: true,
@@ -24,4 +24,3 @@ const studentSchema = mongoose.Schema(
 const Student = mongoose.model("User", studentSchema);
 
 module.exports = { Student };
-// stories: [{ type: Schema.Types.ObjectId, ref: "Story" }],

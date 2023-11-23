@@ -1,0 +1,470 @@
+openapi: 3.0.0
+info:
+  version: "1"
+  title: ""
+  description: "It is a social media api where anyone can get all the basic features of a typical social media."
+  contact:
+    name: Nafis Fuad
+    url: http://example.com
+    email: nafisfuad010@gmail.com
+servers:
+  - description: Dev
+    url: "http://localhost:8080/"
+tags:
+  - name: auth
+    description: Authentication Endpoints (public)
+  - name: User
+    description: User Endpoints(admin only)
+  - name: Story
+    description: Story endpoints (public)
+  - name: Comment
+    description: This will be used to process comments
+  - name: Friend
+    description: This will be used to send and accept friend requests
+paths:
+  "/auth/signup":
+    post:
+      description: create a new account
+      tags: [auth]
+      requestBody:
+        content:
+          "multipart/form-data":
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: nafis fuad
+                email:
+                  type: string
+                  format: email
+                  example: nafis@gmail.com
+                password:
+                  type: string
+                  format: password
+                role:
+                  type: string
+                  example: student
+                  enum:
+                    - admin
+                    - moderator
+                    - student
+                  default: user
+                avatar:
+                  type: string
+                  format: binary
+              required: [name, email, password]
+      responses:
+        "201":
+          description: signup successful
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: object
+                    properties:
+                      login:
+                        type: object
+                        properties:
+                          message:
+                            type: integer
+                            format: int32
+                            example: login successful
+                          token:
+                            type: integer
+                            format: int32
+                            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        "401":
+          $ref: "#/components/responses/401"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/auth/signin":
+    post:
+      description: Login to your account
+      tags: [auth]
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: nafis@gmail.com
+                password:
+                  type: string
+                  format: password
+              required: [email, password]
+      responses:
+        "200":
+          description: signin successful
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: object
+                    properties:
+                      login:
+                        type: object
+                        properties:
+                          message:
+                            type: integer
+                            format: int32
+                            example: login successful
+                      token:
+                        type: integer
+                        format: int32
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NTVlYTUyMTYzOTYxNDgwOTkzZDUzYWEiLCJuYW1lIjoiTmFmaXMgRnVhZCIsImVtYWlsIjoibmFmaXNmdWFkMDEwQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoiJDJiJDEwJFNkUHF4Vy9obkVNUVBaNmNEOHQ1L2U4eHVybmRtajZZTk1qdVV4Y3gwMURNWkJ3VHZILkVhIiwicm9sZSI6ImFkbWluIiwiYXZhdGFyIjoiMTcwMDcwMTQ3MzE4NS1waG90b18yMDIzLTA4LTA1XzE0LTQ5LTM5LmpwZyIsImlhdCI6MTcwMDczNjY1OSwiZXhwIjoxNzAwNzQwMjU5fQ.GY9tXRH9zwbigI1UMn_Q_a7TosB238wfuv2iOHqBgjc
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/auth/logout":
+    post:
+      description: Login to your account
+      tags: [auth]
+      responses:
+        "200":
+          description: signin successful
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: object
+                    properties:
+                      logout:
+                        type: object
+                        properties:
+                          message:
+                            type: integer
+                            format: int32
+                            example: logout successful
+  "/story/postStory":
+    post:
+      tags: [Story]
+      description: create a story
+      requestBody:
+        content:
+          "multipart/form-data":
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                  example: my sad days stories
+                story:
+                  type: string
+                  example: that day I was so sad that my eye's were not stoppong of crying
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required: [subject, story]
+      responses:
+        "201":
+          description: signup successful
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: object
+                    properties:
+                      story:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            format: int32
+                            example: login successful
+        "401":
+          $ref: "#/components/responses/401"
+        "500":
+          $ref: "#/components/responses/500"
+  "/story/getStories":
+    get:
+      description: This route is protected for the admin
+      tags: [Story]
+      responses:
+        "200":
+          description: signin successful
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: object
+                    properties:
+                      story:
+                        type: object
+                        properties:
+                          message:
+                            type: object
+                            properties:
+                              _id:
+                                type: string
+                                example: 6559954fe628c04089174d7c
+                              author:
+                                type: string
+                                example: 6559954fe628c04089174d7c
+                              subject:
+                                type: string
+                                example: first book published
+                              story:
+                                type: string
+                                example: that night was not less than a nightmare to me
+                              tag:
+                                type: string
+                                example: FBP
+                              images:
+                                type: array
+                                items:
+                                  type: string
+                                  example: 1700721451070-photo_2023-08-05_14-49-39.jpg
+                              likers:
+                                type: array
+                                items:
+                                  type: string
+                                  example: 0 :6559954fe628c04089174d7c
+                              likes:
+                                type: integer
+                                format: int32
+                                example: 1
+                              createdAt:
+                                type: string
+                                example: 2023-11-23T06:37:31.086+00:00
+                              updatedAt:
+                                type: string
+                                example: 2023-11-23T06:37:31.086+00:00
+
+        "401":
+          $ref: "#/components/responses/401"
+        "500":
+          $ref: "#/components/responses/500"
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Post:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int32
+              example: 1
+            authorId:
+              type: integer
+              format: int32
+              example: 1
+            title:
+              type: string
+              example: 1
+            body:
+              type: string
+              format: text
+              example: The body of the first article
+            cover:
+              type: string
+              format: url
+              example: https://cover.png
+            status:
+              type: string
+              enum: [draft, published]
+              example: draft
+          required: [id, authorId, title, body, status]
+
+        - $ref: "#/components/schemas/timestamp"
+    timestamp:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: datetime
+        updatedAt:
+          type: string
+          format: datetime
+      required: [createdAt, updatedAt]
+    authorDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: integer
+          format: int32
+          example: nafis fuad
+      required: [id, name]
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          example: 1
+        limit:
+          type: integer
+          format: int32
+          example: 10
+        next:
+          type: integer
+          format: int32
+          example: 3
+        prev:
+          type: integer
+          format: int32
+          example: 1
+        totalPage:
+          type: integer
+          format: int32
+          example: 5
+        totalItems:
+          type: integer
+          format: int32
+          example: 50
+      required:
+        - page
+        - limit
+        - totalPage
+        - totalItems
+  responses:
+    "400":
+      description: "Bad Resuest"
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+                example: 400
+              error:
+                type: string
+                example: Bad Request
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                      example: email
+                    message:
+                      type: string
+                      example: Invalid email
+                    in:
+                      type: string
+                      enum: [query, body]
+                      example: body
+    "404":
+      description: "Not Found"
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                properties:
+                  login:
+                    type: object
+                    properties:
+                      message:
+                        type: integer
+                        format: int32
+                        example: Not Found
+    "500":
+      description: "Internal server error"
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                properties:
+                  login:
+                    type: object
+                    properties:
+                      message:
+                        type: integer
+                        format: int32
+                        example: Login successful
+    "401":
+      description: "Unauthorized"
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                properties:
+                  login:
+                    type: object
+                    properties:
+                      message:
+                        type: integer
+                        format: int32
+                        example: Unauthorized
+
+  parameters:
+    pageParam:
+      in: query
+      name: page
+      description: current page number
+      schema:
+        type: integer
+        format: int32
+        example: 2
+    limitParam:
+      in: query
+      name: limit
+      description: maximum items to be returned
+      schema:
+        type: integer
+        format: int32
+        example: 10
+    sortTypeParam:
+      in: query
+      name: sort_param
+      description: type of sort (asc or dsc)
+      schema:
+        type: string
+        enum: [asc, dsc]
+        example: dsc
+    sortByParam:
+      in: query
+      name: sort_by
+      description: sort key
+      schema:
+        type: string
+        example: updatedAt
+    searchParam:
+      in: query
+      name: search
+      description: search term
+      schema:
+        type: string
+        example: title

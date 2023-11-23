@@ -1,12 +1,8 @@
-const bcrypt = require("bcrypt");
 const { Student } = require("../../models/userModel");
 const jwt = require("jsonwebtoken");
-
+const bcrypt = require("bcrypt");
 const addUser = async (req, res) => {
-  const hashedPassword = await bcrypt.hash(req.body.password, 10);
-  const userInfo = req.file
-    ? { ...req.body, avatar: req.file[0], password: hashedPassword }
-    : { ...req.body, password: hashedPassword };
+  const userInfo = req.body.userInfo;
 
   newUser = new Student(userInfo);
 
@@ -25,8 +21,19 @@ const addUser = async (req, res) => {
       .status(200)
       .json({ message: "User Created Successfully", cookie: token });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
+    const absolutePath = path.join(
+      `${__dirname}/../images/userImages/${req.body.userInfo.avatar}`
+    );
+    fs.unlink(absolutePath, (err) => {
+      if (err) {
+        console.error(`Error deleting file: ${err.message}`);
+      } else {
+        console.log("File deleted successfully");
+      }
+    });
+    res
+      .status(500)
+      .json({ error: { auth: { message: "internal server error" } } });
   }
 };
 
@@ -74,7 +81,7 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
   res.clearCookie(process.env.COOKIE_NAME);
-  res.status(200).json({ logout: { message: "Louout successful" } });
+  res.status(200).json({ logout: { message: "Logout successful" } });
 };
 
 module.exports = { addUser, login, logout };

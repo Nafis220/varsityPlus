@@ -8,13 +8,15 @@ const {
   deleteOwnStory,
   deleteOneStory,
   deletebyUserId,
-  likePost,
+  likeStory,
+  unlikeStory,
 } = require("../../controller/story/storyController");
 const checkRole = require("../../middlewares/user/checkUserRole");
 const checkLogin = require("../../middlewares/user/checkLogin");
+const handleFileUpload = require("../../middlewares/authentication/fileUploadMiddleWare");
 const route = require("express").Router();
 //1: user can upload story, file upload is yet to be done
-route.post("/postStory", publishStory);
+route.post("/postStory", checkLogin, handleFileUpload("story"), publishStory);
 //2: admin and moderator can find all stories
 route.get("/getStories", checkRole("moderatorTask"), getStories);
 //3: any user can see a specific post using tag
@@ -37,6 +39,8 @@ route.get("/friendStory", checkLogin, friendStory);
 //9: user can delete own story
 route.delete("/deleteOwnStory", checkLogin, deleteOwnStory);
 //10:user can like to friend's story
-route.put("/likeStory", checkLogin, likePost);
+route.put("/likeStory", checkLogin, likeStory);
 //11: user can unlike the story
+route.put("/unlikeStory", checkLogin, unlikeStory);
+
 module.exports = route;

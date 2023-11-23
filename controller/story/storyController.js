@@ -1,25 +1,24 @@
-const jwt = require("jsonwebtoken");
 const Story = require("../../models/postModel");
 const turnToTag = require("../../utilities/story/turnToTag");
 const cookiesToUser = require("../../utilities/common/cookiesToUser");
-const Friend = require("../../models/friendModel");
 
+const Friend = require("../../models/friendModel");
 const publishStory = async (req, res) => {
   const userInfo = cookiesToUser(req.signedCookies);
-  const { subject, story } = req.body;
+  const { subject } = req.body;
   const newArray = subject.split(" ");
   const firstLetters = newArray.map((word) => word.charAt(0).toUpperCase());
   const storyTag = `#${firstLetters.join("")}`;
+  const storyInfo = req.body.storyInfo;
 
-  const storyInfo = new Story({
+  const storyDetails = new Story({
+    ...storyInfo,
     author: userInfo._id,
-    subject: subject,
-    story: story,
     tag: storyTag,
   });
 
   try {
-    await storyInfo.save();
+    await storyDetails.save();
     res
       .status(201)
       .json({ success: { story: { message: "Story is saved successfully" } } });
@@ -219,7 +218,7 @@ const deletebyUserId = async (req, res) => {
       .json({ error: { friend: { message: "internal server error" } } });
   }
 };
-const likePost = async (req, res) => {
+const likeStory = async (req, res) => {
   const userInfo = cookiesToUser(req.signedCookies);
   const storyId = req.query.storyId;
   try {
@@ -284,7 +283,39 @@ const likePost = async (req, res) => {
       .json({ error: { friend: { message: "internal server error" } } });
   }
 };
+const unlikeStory = async (req, res) => {
+  const userInfo = cookiesToUser(req.signedCookies);
+  const storyId = req.query.storyId;
+  try {
+    const storyInfo = await Story.findOne({ _id: storyId });
+    const existinglikers = storyInfo.likers;
 
+    if (
+      Object.keys(storyInfo).length > 0 &&
+      existinglikers.includes(userInfo._id)
+    ) {
+      const unLiker = userInfo._id;
+
+      const likeCount = storyInfo.likes - 1;
+
+      await Story.findOneAndUpdate(
+        { _id: storyId },
+        { $pull: { likers: unLiker }, likes: likeCount },
+        { returnNewDocument: false }
+      );
+
+      res.status(200).json({
+        success: { story: { message: "unlike sent successfully" } },
+      });
+    } else {
+      res.status(404).json({ error: { story: { error: "not found" } } });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: { friend: { message: "internal server error" } } });
+  }
+};
 module.exports = {
   publishStory,
   getStories,
@@ -295,5 +326,6 @@ module.exports = {
   deleteOwnStory,
   deleteOneStory,
   deletebyUserId,
-  likePost,
+  likeStory,
+  unlikeStory,
 };
