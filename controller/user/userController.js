@@ -1,6 +1,10 @@
 const { Student } = require("../../models/userModel");
-const userInfo = require("../../utilities/common/cookiesToUser");
+const path = require("path");
+const fs = require("fs");
 const bcrypt = require("bcrypt");
+const cookiesToUser = require("../../utilities/common/cookiesToUser");
+const jwt = require("jsonwebtoken");
+
 const getUsers = async (req, res) => {
   try {
     const allUsers = await Student.find();
@@ -122,6 +126,157 @@ const updateRole = async (req, res) => {
       .json({ error: { user: { message: "internal server error" } } });
   }
 };
+const updateProfileInfo = async (req, res) => {
+  const updatedName = req.body.userInfo.name ? req.body.userInfo.name : null;
+  const updatedBio = req.body.userInfo.bio ? req.body.userInfo.bio : null;
+  const avatarUpdate = req.body.userInfo.avatar
+    ? req.body.userInfo.avatar
+    : null;
+  const userInfo = cookiesToUser(req.signedCookies);
+
+  const email = userInfo.email;
+
+  if (updatedName && !updatedBio && !avatarUpdate) {
+    try {
+      await Student.findOneAndUpdate(
+        { email: email },
+        { name: updatedName },
+        { returnOriginal: true }
+      );
+
+      const newUserInfo = {
+        _id: userInfo._id,
+        name: updatedName,
+        email: userInfo.email,
+        password: userInfo.password,
+        role: userInfo.role,
+        avatar: userInfo.avatar ? user.avatar : null,
+      };
+      const token = jwt.sign(newUserInfo, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_TIMEOUT,
+      });
+
+      res.cookie(process.env.COOKIE_NAME, token, {
+        maxage: process.env.JWT_TIMEOUT,
+        httpOnly: true,
+        signed: true,
+      });
+      res.status(200).json({ message: "Name updated Successfully" });
+    } catch (error) {
+      console.log(error);
+      res.ststus(500).json({ error: error.message });
+    }
+  } else if (updatedName && updatedBio && !avatarUpdate) {
+    try {
+      await Student.bulkWrite([
+        {
+          updateOne: {
+            filter: { email: email },
+            update: { $set: { name: updatedName } },
+          },
+        },
+        {
+          updateOne: {
+            filter: { email: email },
+            update: { $set: { bio: updatedBio } },
+          },
+        },
+      ]);
+      const newUserInfo = {
+        _id: userInfo._id,
+        name: updatedName,
+        email: userInfo.email,
+        password: userInfo.password,
+        role: userInfo.role,
+        avatar: userInfo.avatar ? user.avatar : null,
+        bio: updatedBio,
+      };
+      const token = jwt.sign(newUserInfo, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_TIMEOUT,
+      });
+
+      res.cookie(process.env.COOKIE_NAME, token, {
+        maxage: process.env.JWT_TIMEOUT,
+        httpOnly: true,
+        signed: true,
+      });
+      res.status(200).json({ message: "name and bio updated Successfully" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  } else if (updatedName && updatedBio && avatarUpdate) {
+    try {
+      const absolutePath = path.join(
+        `${__dirname}../../../images/userImages/${userInfo.avatar}`
+      );
+
+      fs.unlink(absolutePath, (err) => {
+        if (err) {
+          console.error(`Error deleting file: ${err.message}`);
+        } else {
+          console.log("File deleted successfully");
+        }
+      });
+      await Student.bulkWrite([
+        {
+          updateOne: {
+            filter: { email: email },
+            update: { $set: { name: updatedName } },
+          },
+        },
+        {
+          updateOne: {
+            filter: { email: email },
+            update: { $set: { bio: updatedBio } },
+          },
+        },
+        {
+          updateOne: {
+            filter: { email: email },
+            update: { $set: { avatar: avatarUpdate } },
+          },
+        },
+      ]);
+      const newUserInfo = {
+        _id: userInfo._id,
+        name: updatedName,
+        email: userInfo.email,
+        password: userInfo.password,
+        role: userInfo.role,
+        avatar: avatarUpdate,
+        bio: updatedBio,
+      };
+      const token = jwt.sign(newUserInfo, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_TIMEOUT,
+      });
+
+      res.cookie(process.env.COOKIE_NAME, token, {
+        maxage: process.env.JWT_TIMEOUT,
+        httpOnly: true,
+        signed: true,
+      });
+      res
+        .status(200)
+        .json({ message: "Name, Bio and Avatar updated Successfully" });
+    } catch (error) {
+      const absolutePath = path.join(
+        `${__dirname}../../../images/userImages/${req.body.userInfo.avatar}`
+      );
+      fs.unlink(absolutePath, (err) => {
+        if (err) {
+          console.error(`Error deleting file: ${err.message}`);
+        } else {
+          console.log("File deleted successfully");
+        }
+      });
+      res
+        .status(500)
+        .json({ error: { auth: { message: "internal server error" } } });
+    }
+  } else {
+    res.status(400).json({ error: "Invalid Info Provided" });
+  }
+};
 
 module.exports = {
   getUsers,
@@ -130,4 +285,5 @@ module.exports = {
   deleteAccount,
   updateRole,
   getOneUser,
+  updateProfileInfo,
 };

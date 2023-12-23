@@ -10,7 +10,7 @@ const {
 } = require("../../middlewares/authentication/userValidator");
 
 //1: user can sign up with name email pass and avatar, cookie is added
-router.post("/signup", userValidator, handleFileUpload("auth"), addUser);
+router.post("/signup", userValidator, handleFileUpload("auth", true), addUser);
 //2: user can signin with email and password, cookie is added
 router.post("/signin", login);
 //3: user can logout, cookie is deleted

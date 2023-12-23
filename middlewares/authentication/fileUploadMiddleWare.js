@@ -1,10 +1,9 @@
-const uploader = require("../../utilities/fileUploads");
 const bcrypt = require("bcrypt");
-
-const handleFileUpload = (infoType) => {
+const uploader = require("../../utilities/fileUploads");
+const handleFileUpload = (infoType, update) => {
   const fileUpload = async (req, res, next) => {
-    if (infoType === "auth" && infoType != "story") {
-      const upload = uploader("auth");
+    if (infoType === "auth" && update === false && infoType != "story") {
+      const upload = uploade("auth");
       upload.any("file")(req, res, async (error) => {
         if (error) {
           res.status(400).json({
@@ -24,6 +23,29 @@ const handleFileUpload = (infoType) => {
                 password: hashedPassword,
               }
             : { ...req.body, password: hashedPassword };
+
+          req.body.userInfo = userInfo;
+          next();
+        }
+      });
+    } else if (infoType === "auth" && update === true && infoType != "story") {
+      const upload = uploader("auth");
+      upload.any("file")(req, res, async (error) => {
+        if (error) {
+          res.status(400).json({
+            error: {
+              fileUpload: {
+                message: `Failed to upload the file because ${error.message}`,
+              },
+            },
+          });
+        } else {
+          userInfo = req.body.avatar
+            ? {
+                ...req.body,
+                avatar: req.body.avatar[0],
+              }
+            : { ...req.body };
 
           req.body.userInfo = userInfo;
           next();

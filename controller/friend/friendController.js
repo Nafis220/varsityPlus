@@ -1,8 +1,6 @@
 const { Student } = require("../../models/userModel");
-const { Post } = require("../../routes/friend/friendRoute");
 const Friend = require("../../models/friendModel");
 const cookiesToUser = require("../../utilities/common/cookiesToUser");
-const Story = require("../../models/postModel");
 const sendRequest = async (req, res) => {
   const searchProperty = req.body.email ? req.body.email : req.body.name;
 

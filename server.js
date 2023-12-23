@@ -10,6 +10,7 @@ const commentRoute = require("./routes/comment/commentRouter");
 const messageRoute = require("./routes/message/messageRoute");
 const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
+
 const YAML = require("yamljs");
 const app = express();
 dotenv.config();
@@ -35,6 +36,7 @@ mongoose.connection.on("error", (err) => {
 mongoose.connection.on("disconnected", () => {
   console.log("Mongoose connection is disconnected");
 });
+
 //* to parse the req body
 app.use(express.json());
 //* to parse the form data
@@ -45,9 +47,20 @@ app.use(cookieParser(process.env.COOKIE_NAME));
 const swaggerDocument = YAML.load("./swagger.yaml");
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.get("/posts", (req, res) => {
-  res.status(200).json({ message: "success" });
+app.post("/posts", async (req, res) => {
+  const { key, value } = req.body;
+  const response = await client.set(key, value);
+
+  res.send(response);
 });
+
+app.get("/posts", async (req, res) => {
+  const { key } = req.body;
+  const response = await client.get(key);
+
+  res.send(response);
+});
+
 //! attached to studentRoute
 app.use("/auth", authRoute);
 app.use("/user", userRoute);

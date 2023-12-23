@@ -11,7 +11,12 @@ const studentSchema = mongoose.Schema(
     email: { type: String, trim: true, required: true, lowercase: true },
     password: { type: String, required: true },
     avatar: { type: String },
-
+    bio: {
+      type: String,
+      trim: true,
+      minLength: 10,
+      maxLength: 100,
+    },
     role: {
       type: String,
       required: true,
