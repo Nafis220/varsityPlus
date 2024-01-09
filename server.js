@@ -10,8 +10,12 @@ const commentRoute = require("./routes/comment/commentRouter");
 const messageRoute = require("./routes/message/messageRoute");
 const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
-
+const nodeCron = require("node-cron");
 const YAML = require("yamljs");
+const client = require("./utilities/redis/redis");
+const {
+  birthdayNotification,
+} = require("./controller/authentication/authController");
 const app = express();
 dotenv.config();
 
@@ -47,19 +51,8 @@ app.use(cookieParser(process.env.COOKIE_NAME));
 const swaggerDocument = YAML.load("./swagger.yaml");
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.post("/posts", async (req, res) => {
-  const { key, value } = req.body;
-  const response = await client.set(key, value);
-
-  res.send(response);
-});
-
-app.get("/posts", async (req, res) => {
-  const { key } = req.body;
-  const response = await client.get(key);
-
-  res.send(response);
-});
+// birthday email sending function using node-cron “Every 1 day at 12:00 am
+nodeCron.schedule("0 0 * * *", birthdayNotification);
 
 //! attached to studentRoute
 app.use("/auth", authRoute);

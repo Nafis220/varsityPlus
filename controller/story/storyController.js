@@ -316,6 +316,29 @@ const unlikeStory = async (req, res) => {
       .json({ error: { friend: { message: "internal server error" } } });
   }
 };
+const searchStories = async (req, res) => {
+  const search = req.body.search;
+  try {
+    const searchedStories = await Story.find({
+      $or: [
+        { subject: { $regex: ".*" + search + ".*" } },
+        { story: { $regex: ".*" + search + ".*" } },
+        {
+          tag: { $regex: ".*" + search + ".*" },
+        },
+      ],
+    });
+
+    if (searchStories.length) {
+      res.status(200).json({ message: searchedStories });
+    } else {
+      res.status(404).json({ messages: "Stories not found" });
+    }
+  } catch (error) {
+    console.log(error),
+      res.status(500).json({ messge: "Internal Server Error" });
+  }
+};
 module.exports = {
   publishStory,
   getStories,
@@ -328,4 +351,5 @@ module.exports = {
   deletebyUserId,
   likeStory,
   unlikeStory,
+  searchStories,
 };

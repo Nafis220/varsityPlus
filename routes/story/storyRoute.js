@@ -10,6 +10,7 @@ const {
   deletebyUserId,
   likeStory,
   unlikeStory,
+  searchStories,
 } = require("../../controller/story/storyController");
 const checkRole = require("../../middlewares/user/checkUserRole");
 const checkLogin = require("../../middlewares/user/checkLogin");
@@ -42,5 +43,7 @@ route.delete("/deleteOwnStory", checkLogin, deleteOwnStory);
 route.put("/likeStory", checkLogin, likeStory);
 //11: user can unlike the story
 route.put("/unlikeStory", checkLogin, unlikeStory);
+//12:admin and moderator can search stories using any thing from sunject story or tag,
+route.get("/searchStories", checkRole("moderatorTask"), searchStories);
 
 module.exports = route;
